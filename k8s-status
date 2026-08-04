@@ -1,0 +1,15 @@
+#!/bin/bash
+
+echo "===== Kubernetes Containers ====="
+docker ps -a \
+    --filter "name=k3d-k8s-lab" \
+    --format "table {{.Names}}\t{{.Status}}"
+
+echo
+echo "===== Kubernetes Cluster ====="
+
+if docker ps --filter "name=k3d-k8s-lab-server-0" --format "{{.Names}}" | grep -q .; then
+    kubectl get nodes -o wide
+else
+    echo "Kubernetes lab is STOPPED."
+fi

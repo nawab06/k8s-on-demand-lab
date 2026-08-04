@@ -1,0 +1,15 @@
+# Kubernetes
+.kube/
+kubeconfig*
+*.kubeconfig
+
+# Secrets
+.env
+*.secret
+
+# OS/editor files
+.DS_Store
+*.swp
+*~
+.vscode/
+.idea/

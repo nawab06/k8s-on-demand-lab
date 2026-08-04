@@ -1,0 +1,10 @@
+#!/bin/bash
+
+echo "Stopping Kubernetes lab..."
+
+docker ps \
+    --filter "name=k3d-k8s-lab" \
+    --format "{{.Names}}" |
+xargs -r docker stop >/dev/null
+
+echo "Kubernetes lab stopped."

@@ -1,0 +1,63 @@
+#!/bin/bash
+set -e
+
+CLUSTER="k8s-lab"
+
+echo "Checking Kubernetes lab..."
+
+if ! k3d cluster list 2>/dev/null | grep -q "^${CLUSTER}[[:space:]]"; then
+    echo "Creating Kubernetes cluster: ${CLUSTER}"
+
+    k3d cluster create "$CLUSTER" \
+        --servers 1 \
+        --agents 2 \
+        --wait \
+        --timeout 120s \
+        --k3s-arg "--disable=traefik@server:*"
+else
+    echo "Kubernetes cluster already exists."
+    echo "Starting Kubernetes containers..."
+
+    docker ps -a \
+        --filter "name=k3d-${CLUSTER}" \
+        --format "{{.Names}}" |
+    xargs -r docker start >/dev/null
+fi
+
+echo
+echo "Waiting for Kubernetes API server..."
+
+for i in {1..60}; do
+    if kubectl get --raw=/readyz >/dev/null 2>&1; then
+        echo "Kubernetes API server is ready."
+        break
+    fi
+
+    if [ "$i" -eq 60 ]; then
+        echo "ERROR: Kubernetes API server did not become ready."
+        exit 1
+    fi
+
+    sleep 2
+done
+
+echo
+echo "Waiting for all nodes to become Ready..."
+
+for i in {1..60}; do
+    NODE_COUNT=$(kubectl get nodes --no-headers 2>/dev/null | wc -l)
+    READY_COUNT=$(kubectl get nodes --no-headers 2>/dev/null | awk '$2 == "Ready" {count++} END {print count+0}')
+
+    if [ "$NODE_COUNT" -eq 3 ] && [ "$READY_COUNT" -eq 3 ]; then
+        break
+    fi
+
+    sleep 2
+done
+
+echo
+echo "===== Kubernetes Nodes ====="
+kubectl get nodes -o wide
+
+echo
+echo "Kubernetes lab is READY."

@@ -1,0 +1,11 @@
+#!/bin/bash
+
+echo "WARNING: This will permanently delete the Kubernetes lab."
+read -rp "Type DELETE to continue: " CONFIRM
+
+if [ "$CONFIRM" = "DELETE" ]; then
+    k3d cluster delete k8s-lab
+    echo "Kubernetes lab deleted."
+else
+    echo "Cancelled."
+fi
