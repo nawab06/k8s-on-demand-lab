@@ -1,437 +1,178 @@
-On-Demand Kubernetes Lab with k3d
+# On-Demand Kubernetes Lab
 
-A lightweight, reusable Kubernetes practice environment running a 3-node K3s cluster inside a single Ubuntu VM using Docker and k3d.
+A lightweight Kubernetes practice lab using **k3d + K3s + Docker** on Ubuntu.
 
-The main design goal is on-demand operation: Kubernetes containers do not need to run when the VM is being used for other labs. Start the cluster only when Kubernetes practice is required, and stop it afterward to release CPU and RAM.
+## 1. Clone the Repository
 
-Architecture
+```bash
+git clone https://github.com/nawab06/k8s-on-demand-lab.git
+cd k8s-on-demand-lab
+```
 
-Ubuntu 22.04 VM
-├── Docker daemon
-│
-└── k3d
-    └── k8s-lab
-        ├── k3d-k8s-lab-server-0   # Control plane
-        ├── k3d-k8s-lab-agent-0    # Worker
-        └── k3d-k8s-lab-agent-1    # Worker
+## 2. Install Prerequisites
 
-Host resources used for this lab
+Update packages and install required tools:
 
-Resource
+```bash
+sudo apt update
+sudo apt install -y curl ca-certificates
+```
 
-Configuration
+### Install k3d
 
-OS
-
-Ubuntu 22.04.5 LTS
-
-CPU
-
-8 vCPU
-
-RAM
-
-7.5 GiB
-
-Swap
-
-2 GiB
-
-Disk
-
-49 GiB
-
-Free disk at setup
-
-~33 GiB
-
-Container runtime
-
-Docker 29.7.1
-
-Kubernetes distribution
-
-K3s
-
-k3d
-
-v5.9.0
-
-kubectl
-
-v1.36.3
-
-K3s version
-
-v1.35.5-k3s1
-
-Versions above document the environment used to create this lab. They may differ if the installation is performed later.
-
-Why k3d?
-
-k3d runs lightweight K3s Kubernetes nodes as Docker containers. It is a good fit for a personal laptop/VM lab because it provides a multi-node Kubernetes environment without requiring multiple full virtual machines.
-
-This lab intentionally uses:
-
-1 Kubernetes control-plane node
-
-2 Kubernetes worker nodes
-
-K3s
-
-containerd inside K3s
-
-Docker on the Ubuntu host
-
-Traefik disabled so ingress can be introduced later as a separate learning exercise
-
-Prerequisites
-
-The Ubuntu VM should have:
-
-Ubuntu 22.04 or a compatible Linux distribution
-
-Docker installed and running
-
-A user with permission to access /var/run/docker.sock
-
-curl
-
-k3d
-
-kubectl
-
-For Docker access without sudo, add the current user to the Docker group:
-
-sudo usermod -aG docker "$USER"
-newgrp docker
-docker ps
-
-Membership in the Docker group effectively grants root-level control over the host. Use this only on a trusted personal/lab system.
-
-Installation
-
-Install Docker using the official Docker installation instructions for your Linux distribution.
-
-Install k3d:
-
+```bash
 curl -fsSL https://raw.githubusercontent.com/k3d-io/k3d/main/install.sh | bash
+```
 
-Install the latest stable kubectl:
+### Install kubectl
 
+```bash
 curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+
 sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
+
 rm -f kubectl
+```
 
 Verify:
 
+```bash
+docker --version
 k3d version
 kubectl version --client
-docker --version
+```
 
-Repository layout
+## 3. Configure Docker Access
 
-k8s-lab/
-├── k8s-start
-├── k8s-stop
-├── k8s-status
-├── k8s-destroy
-└── README.md
+Your user must be able to access Docker without `sudo`.
 
-The scripts can be kept in ~/k8s-lab/ on the VM.
-
-Commands
-
-Start the lab
-
-k8s-start
-
-The first execution creates the cluster. Later executions start the existing Kubernetes containers and wait for the API server and all three nodes to become ready.
-
-Expected result:
-
-NAME                   STATUS   ROLES
-k3d-k8s-lab-agent-0    Ready    <none>
-k3d-k8s-lab-agent-1    Ready    <none>
-k3d-k8s-lab-server-0   Ready    control-plane
-
-Check status
-
-k8s-status
-
-This displays the Kubernetes containers and, when the cluster is running, the Kubernetes nodes.
-
-Stop the lab
-
-k8s-stop
-
-This stops the k3d Kubernetes containers without deleting the cluster.
-
-The cluster data/configuration remains available so it can be started again later.
-
-Destroy the lab
-
-k8s-destroy
-
-This permanently deletes the k8s-lab k3d cluster after confirmation.
-
-Use this only when you intentionally want to rebuild the environment.
-
-On-demand lifecycle
-
-The intended workflow is:
-
-VM boot
-   |
-   v
-Docker daemon running
-   |
-   +---- Other labs/work
-   |
-   v
-k8s-start
-   |
-   v
-3-node Kubernetes cluster
-   |
-   +---- Kubernetes practice
-   |
-   v
-k8s-stop
-   |
-   v
-Kubernetes containers stopped
-   |
-   +---- Resources available for other labs
-   |
-   v
-k8s-start
-   |
-   v
-Cluster available again
-
-The Kubernetes cluster is not configured as a systemd service and is not intended to start automatically when Ubuntu boots.
-
-Docker itself may remain enabled because other Docker-based labs may depend on it.
-
-Kubernetes exercises planned for this lab
-
-This environment is intended for hands-on practice with:
-
-Fundamentals
-
-Kubernetes architecture
-
-kubectl
-
-Namespaces
-
-Pods
-
-Labels and selectors
-
-Annotations
-
-Workloads
-
-Deployments
-
-ReplicaSets
-
-Scaling
-
-Rolling updates
-
-Rollbacks
-
-Jobs
-
-CronJobs
-
-DaemonSets
-
-StatefulSets
-
-Networking
-
-ClusterIP Services
-
-NodePort Services
-
-LoadBalancer Services
-
-DNS
-
-Ingress
-
-NetworkPolicies
-
-Configuration and storage
-
-ConfigMaps
-
-Secrets
-
-EmptyDir
-
-PersistentVolumes
-
-PersistentVolumeClaims
-
-StorageClasses
-
-Scheduling
-
-Node labels
-
-Node selectors
-
-Affinity/anti-affinity
-
-Taints and tolerations
-
-Resource requests and limits
-
-Security
-
-ServiceAccounts
-
-RBAC
-
-Roles
-
-ClusterRoles
-
-RoleBindings
-
-Security contexts
-
-Operations and troubleshooting
-
-Pod failures
-
-CrashLoopBackOff
-
-ImagePullBackOff
-
-Pending pods
-
-Scheduling failures
-
-Service connectivity
-
-DNS troubleshooting
-
-Logs
-
-Events
-
-Resource troubleshooting
-
-Package management and observability
-
-Helm
-
-Prometheus
-
-Grafana
-
-Kubernetes metrics
-
-Cluster troubleshooting
-
-Useful verification commands
-
-Check nodes:
-
-kubectl get nodes -o wide
-
-Check all namespaces:
-
-kubectl get pods -A
-
-Check cluster information:
-
-kubectl cluster-info
-
-Check Kubernetes contexts:
-
-kubectl config get-contexts
-
-Check current context:
-
-kubectl config current-context
-
-Check cluster resources:
-
-kubectl get all -A
-
-Troubleshooting
-
-Docker permission denied
-
-If k3d reports:
-
-permission denied while trying to connect to the Docker daemon socket
-
-run:
-
+```bash
 sudo usermod -aG docker "$USER"
 newgrp docker
+```
+
+Verify:
+
+```bash
 docker ps
+```
 
-Then retry:
+If `docker ps` works without `sudo`, continue.
 
+## 4. Install the Lab Commands
+
+From the cloned repository:
+
+```bash
+sudo ln -sf "$(pwd)/k8s-start" /usr/local/bin/k8s-start
+sudo ln -sf "$(pwd)/k8s-stop" /usr/local/bin/k8s-stop
+sudo ln -sf "$(pwd)/k8s-status" /usr/local/bin/k8s-status
+sudo ln -sf "$(pwd)/k8s-destroy" /usr/local/bin/k8s-destroy
+```
+
+Make sure the scripts are executable:
+
+```bash
+chmod +x k8s-start k8s-stop k8s-status k8s-destroy
+```
+
+## 5. Start the Kubernetes Lab
+
+```bash
+k8s-start
+```
+
+The first execution creates the Kubernetes cluster.
+
+Check the nodes:
+
+```bash
+kubectl get nodes
+```
+
+All three nodes should show `Ready`.
+
+## 6. Check Lab Status
+
+```bash
+k8s-status
+```
+
+This shows the Kubernetes containers and node status.
+
+## 7. Stop the Lab
+
+When you finish practicing:
+
+```bash
+k8s-stop
+```
+
+This stops the Kubernetes containers without deleting the cluster.
+
+The Ubuntu VM and Docker daemon can continue running for other work.
+
+## 8. Start the Lab Again
+
+When you want to practice Kubernetes again:
+
+```bash
+k8s-start
+```
+
+The existing cluster will be started again.
+
+## 9. Delete the Lab
+
+To permanently delete the Kubernetes cluster:
+
+```bash
+k8s-destroy
+```
+
+You will be asked to confirm the deletion.
+
+Use this only when you want to completely rebuild the lab.
+
+## Typical Workflow
+
+```bash
+# Start Kubernetes
 k8s-start
 
-API server temporarily unavailable
+# Check nodes
+kubectl get nodes
 
-When starting a stopped cluster, the Kubernetes API server can take a few seconds to become ready.
+# Practice Kubernetes
+kubectl get pods -A
 
-The k8s-start script waits for:
+# Check lab status
+k8s-status
 
-The Kubernetes API server readiness endpoint.
-
-All three Kubernetes nodes to report Ready.
-
-Check running containers
-
-docker ps
-
-Check all k3d containers
-
-docker ps -a --filter "name=k3d-k8s-lab"
-
-Check k3d cluster
-
-k3d cluster list
-
-Important notes
-
-Docker group security
-
-Adding a user to the docker group provides broad control over the Docker daemon and therefore effectively root-equivalent capabilities on the host. This is acceptable for a trusted personal lab but should be considered carefully on shared or production systems.
-
-Resource usage
-
-When the Kubernetes lab is stopped with:
-
+# Finish the lab
 k8s-stop
+```
 
-the Kubernetes node containers are stopped. Docker itself remains running because it is used by the host and potentially by other labs.
+## On-Demand Design
 
-Persistence
+The Kubernetes cluster is intentionally **on-demand**.
 
-Stopping the cluster is not the same as deleting it.
+```text
+Ubuntu VM
+   |
+   +-- Docker daemon       → Running
+   |
+   +-- Kubernetes cluster  → OFF by default
+                              |
+                         k8s-start
+                              ↓
+                         Kubernetes ON
+                              |
+                         Practice
+                              |
+                         k8s-stop
+                              ↓
+                         Kubernetes OFF
+```
 
-Use:
-
-k8s-stop
-
-to stop it temporarily.
-
-Use:
-
-k8s-destroy
-
-only when you want to delete the cluster and rebuild it.
+The lab does not configure Kubernetes to automatically start when the Ubuntu VM boots.
